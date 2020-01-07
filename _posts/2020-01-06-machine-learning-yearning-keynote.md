@@ -26,7 +26,7 @@ tags: machine learning
 
 ### Dev/test set and Metric
 
-<img class="image image--md" src="../assets/images/2020-01-06-machine-learning-yearning-keynote/ml-model-building-loop.png" alt="Machine Learning Model Building Loop" />
+<img class="image image--xl" src="../assets/images/2020-01-06-machine-learning-yearning-keynote/ml-model-building-loop.png" alt="Machine Learning Model Building Loop" />
 
 - Having a dev set and metric allows you to very quickly detect which ideas are successfully giving you small (or large) improvements, and therefore lets you quickly decide what ideas to keep refining, and which ones to discard. It can speed up the machine learning system building iterations.
 - It is quite common to change dev/test sets or evaluation metrics during a project. Having an initial dev/test set and metric quickly helps you **iterate quickly**.
