@@ -1,7 +1,15 @@
 ---
 title: Machine Learning Yearning Keynote
-tags: machine learning
+tags: machine_learning
+layout: article
+article_header:
+  type: overlay
+  theme: dark
+  background_image:
+      src: /assets/images/2020-01-06-machine-learning-yearning-keynote/wood-3240764_1920.jpg
 ---
+
+<!--more-->
 
 ## Train, Dev(validation) & Test set
 
@@ -26,7 +34,10 @@ tags: machine learning
 
 ### Dev/test set and Metric
 
-<img class="image image--xl" src="../assets/images/2020-01-06-machine-learning-yearning-keynote/ml-model-building-loop.png" alt="Machine Learning Model Building Loop" />
+<div class="w3-container">
+  <img src="/assets/images/2020-01-06-machine-learning-yearning-keynote/ml-model-building-loop.png" class="image image--xl" alt="Machine Learning Model Building Loop" align="middle">
+  <p>Machine Learning Model Building Loop</p>
+</div>
 
 - Having a dev set and metric allows you to very quickly detect which ideas are successfully giving you small (or large) improvements, and therefore lets you quickly decide what ideas to keep refining, and which ones to discard. It can speed up the machine learning system building iterations.
 - It is quite common to change dev/test sets or evaluation metrics during a project. Having an initial dev/test set and metric quickly helps you **iterate quickly**.
@@ -56,3 +67,15 @@ Error analysis does not produce a rigid mathematical formula that tells you what
       - Find a new Eyeball dev set by by moving more examples from the Blackbox dev set in the Eyeball dev set, or
       - Acquiring new labeled data 
   - Examining an Eyeball dev set **won't be helpful for a task that even humans can't do well**, since it's harder to figure out why the algorithm didn't predict correctly.
+
+## Bias & Variance
+
+Two major sources of error in machine learning,
+
+> **Bias**: The algorithm's error rate on the training set
+> 
+> **Variance**: The difference between the dev error and the training error.
+> 
+> **Optimal error rate (Unavoidable bias)**:  The error rate of an optimal algorithm (e.g. the best speech system in the world has error rate 14%, so the optimal error rate is 14%). In statistics, the optimal error rate is also called Bayes error rate, or Bayes rate
+>
+> **Avoidable bias**: The difference between the training error and the optimal error rate.
