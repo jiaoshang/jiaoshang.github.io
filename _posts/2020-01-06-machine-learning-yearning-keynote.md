@@ -2,6 +2,7 @@
 title: Machine Learning Yearning Keynote
 tags: machine_learning
 layout: article
+mathjax: true
 article_header:
   type: overlay
   theme: dark
@@ -190,3 +191,122 @@ Only use `inconsistent` data when there is some x —> y mapping that works well
 ### Weighting Data
 Suppose the ratio of Internet examples (200,000) and photo examples (5,000) is 40:1, to build a neural network with cost huge computational resources.
 Take as square error optimisation objective, thus the model tries to optimise:
+
+$$
+\min\limits_{\theta} \sum\limits_{(x,y)\in Internet} (h _{\theta} (x)- y)^2 + \min\limits_{\theta} \sum\limits_{(x,y)\in Photo} (h _{\theta} (x)- y)^2
+$$
+
+
+But by weighting Internet examples less, set 𝛽​=1/40, the model would give equal weight to Internet data and photo data, 
+
+$$
+\beta\min\limits_{\theta} \sum\limits_{(x,y)\in Internet} (h _{\theta} (x)- y)^2 +  \min\limits_{\theta} \sum\limits_{(x,y)\in Photo} (h _{\theta} (x)- y)^2
+$$
+
+then you don’t have to build as massive a neural network to make sure the algorithm does well on both types of tasks. 
+
+This type of re-weighting is needed **only** when you suspect the additional data (Internet Images) has a very **different distribution** than the dev/test set, or if the additional data is **much larger** than the data that came from the same distribution as the dev/test set (photos).
+
+### Generalising from The Training Set to The Dev Set
+
+If the model is trained on a training set that its distribution is quite different with dev/test set's distribution, and the performance on dev/test set is worse than you expected, it might be wrong in,
+
+1. It does not do well on the training set. This is the problem of high **(avoidable) bias** on the training set distribution.
+2. It does well on the training set, but does not generalise well to previously unseen data drawn from the same distribution as the training set.​ This is **high variance**.
+3. It generalises well to new data drawn from the same distribution as the training set, but not to data drawn from the dev/test set distribution. This is **​data mismatch​**, since it is because the training set data is a poor match for the dev/test set data.
+
+In order to figure out which issue the model suffers from, it's good to split training set into 2 subsets, then there are four sets,
+
+- Training set: This is the data that the algorithm will learn from. It does not have to be drawn from the same distribution as what we really care about (the dev/test set distribution).
+- Training dev set: This data is drawn from the same distribution as the training set This is usually smaller than the training set; it only needs to be large enough to evaluate and track the progress of our learning algorithm.
+- Dev set: This is drawn from the same distribution as the test set, and it reflects the distribution of data that we ultimately care about doing well on. 
+- Test set: This is drawn from the same distribution as the dev set.
+
+Now you can evaluate,
+- Training error, by evaluating on the training set.
+- The algorithm’s ability to generalise to new data drawn from the training set distribution, by evaluating on the training dev set.
+- The algorithm’s performance on the task you care about, by evaluating on the dev and/or test sets.
+
+#### Examples
+
+|                                                | Distribution A: Internet + Photos | Distribution: Photos |
+| ---------------------------------------------- | --------------------------------- | -------------------- |
+| Human Level                                    | Human Level Error ~= 0%           |                      |
+| Error on examples algorithm has trained on     | Training Error ~= 10%             |                      |
+| Error on examples algorithm has not trained on | Training-Dev Error ~=11%          | Dev-Test Error ~=20% |
+
+- Avoidable Bias = Training Error - Human Level Error ~= 10%
+- Variance = Training-Dev Error - Training Error ~= 1%
+- Data Mismatch = Dev-Test Error - Training-Dev Error ~= 9%
+
+### Addressing Data Mismatch
+- Try to understand what properties of the data differ between the training and the dev set distributions
+- Try to find more training data that better matches the dev set examples that your algorithm has trouble with
+- Unfortunately, there are no guarantees in this process. If you don't have any way to get more training data that better match the dev set data, you might not have a clear path towards improving performance.
+
+### Artificial Data Synthesis
+In some circumstances, it's hard to collect a lot of data that you care about (dev/test set) to train your model. It might be easier to do artificially synthesising to generate a huge dataset that reasonably matches the dev/test set. e.g. road noise audio clips + people speaking in quiet room audio = people speaking in noisy road audio
+
+- It is sometimes easier to create synthetic data that appears realistic to a person than it is to create data that appears realistic to a computer. (Generate 1000 hours audio with 1 hour noise audio, model would overfit the 1 hour noise, but when a person listen to the audio,  it's hard for him/her to recognise this issue)
+- When synthesising data, put some thought into whether you’re really synthesising a representative set of examples. Try to avoid giving the synthesised data properties that makes it possible for a learning algorithm to distinguish synthesised from non-synthesised examples.
+- Data synthesis might takes weeks that are close enough to the actual distribution. But if it succeeds, you can suddenly have a much larger training set than before.
+
+
+## Debugging Inference Algorithms
+### Optimisation Verification Test
+
+Given some input $$x$$,  you know how to compute $$Score_x(y)$$ that indicates how good a response ​y​ is to an input ​x.​ Furthermore, you are using an approximate algorithm to try to find $$ \underset{y}{\operatorname{arg max}} Score_x(y) $$ , but the whole system doesn't perform good.
+
+
+You can use optimisation verification test method to figure out what went wrong,
+
+Suppose $$y^*$$ is the “correct” output but the algorithm instead outputs $$y_ {out}$$.​ Then the key test is to measure whether $$Score​_x(​y^*) > Score​_x(​ y​_{out})$$​ . There are 2 possibilities, 
+
+1. **Search algorithm problem**​. The approximate search algorithm (beam search) failed to find the value of $​y$​ that maximises $$Score_x(y)$$.
+  
+2. **Objective (scoring function) problem**.​ Our estimates for $$Score_x(y) = P(​y\|​x)$$ were inaccurate. In particular, our choice of $$Score_x(y)$$ failed to recognise which one is the correct transcription.
+
+
+- If $$ Score​_x(​y^*) > Score​_x(​y​_{out})​$$, In this case, your learning algorithm has correctly given $$y^*$$ a higher score than $$y_{out}$$.​ Nevertheless, our approximate search algorithm chose S​out r​ather than $$y^*$$. This tells you that your approximate search algorithm is failing to choose the value of $$x$$ that maximises $$Score_x(​y​)$$. In this case, the Optimisation Verification test tells you that you have a search algorithm problem and should focus on that. For example, you could try increasing the beam width of beam search.
+- If $$Score​_x(​y^*) ≤ Score_x(​y_{​out})$$​, In this case, you know that the way you’re computing $$Score​_x(​·)$$ is at fault. t is failing to give a strictly higher score to the correct output ​$$y^*$$​ than the incorrect ​yout.​ The Optimisation Verification test tells you that you have an objective (scoring) function problem. Thus, you should focus on improving how you learn or approximate $$Score_x(y)$$ for different sentences $$​y$$.
+
+Note: $$y^*$$ doesn't need to be the optimal output, so long as $$y^*$$  is a superior output to the performance of the current system output. 
+
+To apply the Optimisation Verification test in practice, you should examine the errors in your dev set. For each error, you would test whether $$Score​_x(​y^*) > Score​_x(​y_{​out})$$​ . Each dev example for which this inequality holds will get marked as an error caused by the optimisation algorithm. Each example for which this does not hold ($$Score​_x(​y^*) ≤ Score​_x(​y_{​out})​$$) gets counted as a mistake due to the way you’re computing $$Score​_x(​·)$$
+
+## End-to-end Deep Learning
+> End-to-end learning algorithm is using a single learning algorithm to replace a pipeline system (it can contains rules, hand-engineered components, non-ML algorithms). The input of the algorithm can be a 'raw' data, and the output is the target for the pipeline system.
+
+### Pros and Cons of End-to-end Learning
+#### Pros
+- The non-ML components limit the potential performance of the system
+- End-to-end learning systems tend to do well when there is a lot of labeled data for “both ends”—the input end and the output end
+- End-to-end deep learning can directly learn ​target​ that are much more complex than a number, e.g. text, image, audio
+
+#### Cons
+- Having more hand-engineered components generally allows a system to learn with less data
+- The hand-engineered knowledge “supplements” the knowledge the algorithm acquires from data. When we don’t have much data, this knowledge is useful
+
+### Choosing Pipeline Components
+- Data Availability: In some cases, there might be not enough data available for training an end-to-end algorithm. But if there is a lot of data available for training "intermediate modules" of a pipeline, it's reasonable to consider using a pipeline with multiple stages. (All available data can be used to train the intermediate modules)
+- Task Simplicity: Try to build a pipeline where each component is a relatively "simple" function that can therefore be learned from only a modest amount of data. (If a complex task can be broken down into several simpler sub-tasks, by resolving the sub-tasks explicitly, the algorithm can get some prior knowledge, that can help it learn a task more efficiently, as input)
+
+## Error Analysis by Parts
+> By carrying out ​error analysis by parts​, you can try to attribute each mistake the algorithm makes to one (or sometimes several) of the n parts of the pipeline. Look at the output of each part, and see if you can figure out which one made a mistake.
+
+### Attributing error to one part
+> Run an experiment in each component with 'perfect' input, with this analysis on the misclassified dev set data,  you can attribute each error to one component. It allows you to estimate the fraction of errors due to each component of the pipeline, and decide the main focus.
+
+// TODO Give example of p111
+
+The components of an ML pipeline should be ordered according to a Directed Acyclic Graph (DAG), meaning that you should be able to compute them in some fixed left-to-right order, and later components should depend only on earlier components’ outputs. So long as the mapping of the components order follows the DAG ordering, then the error analysis will be fine.
+
+Carrying out error analysis on a learning algorithm is like using data science to analyse an ML system’s mistakes in order to derive insights about what to do next. At its most basic, error analysis by parts tells us what component(s) performance is (are) worth the greatest effort to improve.
+
+### Error Analysis by Parts & Comparison to Human-Level Performance
+If the project aims to automate something that human can do, the human-level performance can be used as benchmark to do the error analysis process. If one of the components is far from human-level performance, you can have a good case to focus on improving the performance of that component. 
+
+### Spotting a flawed ML Pipeline
+> If each individual component of the ML pipeline performs well, but the overall pipeline's performance is bad. This usually means that the pipeline is flawed and needs to be redesigned. Error analysis can also help you understand if you need to redesign your pipeline.
+
+It could be the inputs of some component do not contain enough information, you should rethink what other information is needed.
